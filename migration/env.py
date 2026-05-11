@@ -24,10 +24,10 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 # TODO: Importar os modelos quando forem criados
-# from app.database import Base
-# from app.models import project, task
-# target_metadata = Base.metadata
-target_metadata = None
+from app.database import Base
+from app.models.project import Project
+from app.models.task import Task
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -35,8 +35,11 @@ target_metadata = None
 # ... etc.
 
 def get_url():
-    """Obter URL do banco de dados das variáveis de ambiente"""
-    return os.getenv("DATABASE_URL", "postgresql+psycopg2://usuario:senha@localhost:5432/nome_do_banco")
+    """Teste de diagnóstico"""
+    url = os.getenv("DATABASE_URL")
+    if not url:
+        raise ValueError("DATABASE_URL não definida")
+    return url
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.

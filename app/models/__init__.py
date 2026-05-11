@@ -1,1 +1,4 @@
-# Este arquivo torna o diretório models um pacote Python 
+from .project import Project
+from .task import Task
+
+__all__ = ["Project", "Task"]

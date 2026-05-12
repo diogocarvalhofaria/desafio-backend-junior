@@ -1,11 +1,50 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.routers import projects_router, tasks_router
+from app.schemas.base import StandardResponse
+from fastapi_pagination import add_pagination
 
 app = FastAPI(
     title="API de Projetos e Tarefas",
     description="API RESTful para gestão de projetos e tarefas",
     version="1.0.0"
 )
+
+#Tratamento de erro
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "status": exc.status_code,
+            "message": exc.detail
+        }
+    )
+
+@app.exception_handler(422)
+async def validation_exception_handler(request: Request, exc):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "status": 422,
+            "message": "Dados inválidos enviados na requisição",
+            "errors": str(exc)
+        }
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": 500,
+            "message": "Ocorreu um erro interno inesperado no servidor",
+            "details": str(exc) if app.debug else "Contate o suporte"
+        }
+    )
 
 # Configurar CORS
 app.add_middleware(
@@ -25,7 +64,15 @@ def read_root():
         "redoc": "/redoc"
     }
 
-@app.get("/health")
+@app.get("/health", response_model=StandardResponse)
 def health_check():
     """Endpoint para verificar a saúde da API"""
-    return {"status": "healthy"} 
+    return StandardResponse(
+        message="API está operando normalmente",
+        data={"status": "healthy"}
+    )
+
+app.include_router(projects_router)
+app.include_router(tasks_router)
+
+add_pagination(app)

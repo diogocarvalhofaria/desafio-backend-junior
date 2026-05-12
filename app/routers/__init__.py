@@ -1,1 +1,4 @@
-# Este arquivo torna o diretório routers um pacote Python 
+from .projects import router as projects_router
+from .task import router as tasks_router
+
+__all__ = ["projects_router", "tasks_router"]

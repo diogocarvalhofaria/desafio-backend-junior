@@ -1,25 +1,23 @@
-# Desafio Técnico - API de Projetos e Tarefas
+# API de Projetos e Tarefas
 
-Este projeto consiste em uma API RESTful desenvolvida com **FastAPI** e **PostgreSQL**, com foco na gestão de projetos e tarefas. Ele visa avaliar conhecimentos práticos em:
-
-- Estruturação de APIs REST
-- Relacionamentos entre entidades
-- Boas práticas com FastAPI e SQLAlchemy
-- Uso de UUIDs como identificadores
-- Migrations com Alembic
+API RESTful desenvolvida com **FastAPI** e **PostgreSQL** para gestão de projetos e tarefas, com paginação, testes automatizados e documentação interativa via Swagger.
 
 ---
 
-## Tecnologias utilizadas
+## Tecnologias
 
-- Python 3.10+
-- FastAPI
-- SQLAlchemy
-- Alembic
-- PostgreSQL
-- Pydantic
-- Uvicorn
-- Pytest (para testes)
+| Tecnologia | Uso |
+|---|---|
+| Python 3.11+ | Linguagem principal |
+| FastAPI | Framework web |
+| SQLAlchemy | ORM |
+| Alembic | Migrations |
+| PostgreSQL 15 | Banco de dados |
+| Pydantic v2 | Validação e schemas |
+| Uvicorn | Servidor ASGI |
+| fastapi-pagination | Paginação de resultados |
+| Pytest | Testes automatizados |
+| Docker / Docker Compose | Infraestrutura |
 
 ---
 
@@ -28,330 +26,219 @@ Este projeto consiste em uma API RESTful desenvolvida com **FastAPI** e **Postgr
 ```
 .
 ├── app/
-│   ├── models/              # Modelos do banco de dados (A SER CRIADO)
+│   ├── models/
+│   │   ├── __init__.py          # Re-exporta Project e Task
+│   │   ├── project.py           # Modelo ORM de Project
+│   │   └── task.py              # Modelo ORM de Task
+│   ├── schemas/
 │   │   ├── __init__.py
-│   │   ├── project.py       # Modelo Project (A SER CRIADO)
-│   │   └── task.py          # Modelo Task (A SER CRIADO)
-│   ├── schemas/             # Schemas Pydantic (A SER CRIADO)
-│   │   ├── __init__.py
-│   │   ├── project.py       # Schemas para Project (A SER CRIADO)
-│   │   └── task.py          # Schemas para Task (A SER CRIADO)
-│   ├── routers/             # Rotas da API (A SER CRIADO)
-│   │   ├── __init__.py
-│   │   ├── projects.py      # Endpoints de projetos (A SER CRIADO)
-│   │   └── tasks.py         # Endpoints de tarefas (A SER CRIADO)
+│   │   ├── base.py              # StandardResponse[T] e MessageResponse
+│   │   ├── project.py           # Schemas de Project (Create, Update, Response, WithTasks)
+│   │   └── task.py              # Schemas de Task (Create, Update, Response)
+│   ├── routers/
+│   │   ├── __init__.py          # Re-exporta os routers
+│   │   ├── projects.py          # Endpoints de projetos
+│   │   └── task.py              # Endpoints de tarefas
+│   ├── services/
+│   │   ├── __init__.py          # Re-exporta ProjectService e TaskService
+│   │   ├── project_service.py   # Regras de negócio de projetos
+│   │   └── task_service.py      # Regras de negócio de tarefas
 │   ├── __init__.py
-│   ├── database.py          # Configuração do banco
-│   └── main.py              # Entrada principal da aplicação
-├── migration/               # Migrations geradas com Alembic
-│   ├── env.py               # Configuração do ambiente Alembic
-│   └── script.py.mako       # Template para migrations
-├── tests/                   # Testes automatizados (A SER CRIADO)
+│   ├── database.py              # Engine, sessão e dependência get_db
+│   └── main.py                  # Entrada da aplicação, middlewares, handlers de erro
+├── migration/
+│   ├── versions/                # Migrations geradas pelo Alembic
+│   ├── env.py                   # Configuração do ambiente Alembic
+│   └── script.py.mako           # Template de migrations
+├── tests/
 │   ├── __init__.py
-│   ├── test_projects.py     # Testes para projetos (A SER CRIADO)
-│   └── test_tasks.py        # Testes para tarefas (A SER CRIADO)
-├── alembic.ini              # Configuração do Alembic
-├── requirements.txt         # Dependências
-├── docker-compose.yml       # Configuração Docker para PostgreSQL
-├── .gitignore              # Arquivos ignorados pelo Git
+│   ├── conftest.py              # Fixtures: banco SQLite in-memory, client, reset_db
+│   ├── test_projects.py         # Testes de CRUD de projetos
+│   └── test_tasks.py            # Testes de CRUD de tarefas
+├── .env.example                 # Exemplo de variáveis de ambiente
+├── alembic.ini                  # Configuração do Alembic
+├── docker-compose.yml           # PostgreSQL + API via Docker
+├── Dockerfile                   # Imagem da aplicação
+├── requirements.txt             # Dependências do projeto
 └── README.md
 ```
 
 ---
 
-## Requisitos
+## Instalação e execução
 
-- Python 3.10+
-- PostgreSQL
-- (Opcional) Docker e Docker Compose
+### Opção 1: Docker (Recomendado) 🐳
+
+Sobe o banco de dados **e** a API com um único comando. As migrations são aplicadas automaticamente.
+
+**Pré-requisito:** Docker e Docker Compose instalados.
+
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/seu-usuario/desafio-backend-junior.git
+cd desafio-backend-junior
+
+# 2. Subir todos os serviços
+docker-compose up --build
+```
+
+A API estará disponível em `http://localhost:8000`.
+
+> Para rodar em background: `docker-compose up --build -d`  
+> Para parar: `docker-compose down`  
+> Para parar e apagar os dados: `docker-compose down -v`
 
 ---
 
-## Instalação e execução
+### Opção 2: Execução local
 
-### Opção 1: Usando Docker (Recomendado)
+**Pré-requisitos:** Python 3.10+ e Docker (para o banco).
 
-1. **Clonar o repositório**
 ```bash
-git clone https://github.com/seu-usuario/api-projetos-tarefas.git
-cd api-projetos-tarefas
-```
+# 1. Clonar o repositório
+git clone https://github.com/seu-usuario/desafio-backend-junior.git
+cd desafio-backend-junior
 
-2. **Iniciar o PostgreSQL com Docker**
-```bash
-docker-compose up -d
-```
-
-3. **Criar e ativar um ambiente virtual**
-```bash
+# 2. Criar e ativar o ambiente virtual
 python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-# ou
-.venv\Scripts\activate     # Windows
-```
+source .venv/bin/activate   # Linux/macOS
+.venv\Scripts\activate      # Windows
 
-4. **Instalar as dependências**
-```bash
+# 3. Instalar dependências
 pip install -r requirements.txt
-```
 
-5. **Configurar variáveis de ambiente**
-Crie um arquivo `.env` na raiz do projeto:
-```env
-DATABASE_URL=postgresql+psycopg2://usuario:senha@localhost:5432/desafio_db
-```
+# 4. Configurar variáveis de ambiente
+cp .env.example .env
+# Edite o .env com sua DATABASE_URL
 
-6. **Implementar os modelos, schemas e routers** (ver seção abaixo)
+# 5. Subir apenas o banco de dados
+docker-compose up -d postgres
 
-7. **Rodar as migrations**
-```bash
+# 6. Rodar as migrations
 alembic upgrade head
-```
 
-8. **Iniciar o servidor**
-```bash
+# 7. Iniciar o servidor
 uvicorn app.main:app --reload
 ```
 
-### Opção 2: PostgreSQL local
-
-1. **Instalar PostgreSQL localmente**
-2. **Criar um banco de dados**
-3. **Configurar a URL de conexão no arquivo `.env`**
-4. **Seguir os passos 3-8 da Opção 1**
+A API estará disponível em `http://localhost:8000`.
 
 ---
 
-## Implementação necessária
+## Documentação interativa
 
-### 1. Modelos (app/models/)
-
-Crie os seguintes arquivos:
-
-#### `app/models/project.py`
-```python
-# Modelo Project com:
-# - id (UUID, primary key)
-# - name (String, obrigatório)
-# - description (Text, opcional)
-# - created_at (DateTime)
-# - updated_at (DateTime)
-# - Relacionamento com Task (1:N)
-```
-
-#### `app/models/task.py`
-```python
-# Modelo Task com:
-# - id (UUID, primary key)
-# - title (String, obrigatório)
-# - description (Text, opcional)
-# - completed (Boolean, default False)
-# - created_at (DateTime)
-# - updated_at (DateTime)
-# - project_id (UUID, foreign key para Project)
-# - Relacionamento com Project (N:1)
-```
-
-### 2. Schemas (app/schemas/)
-
-Crie os seguintes arquivos:
-
-#### `app/schemas/project.py`
-```python
-# Schemas para Project:
-# - ProjectBase (campos básicos)
-# - ProjectCreate (para criação)
-# - ProjectUpdate (para atualização)
-# - Project (resposta completa)
-# - ProjectWithTasks (inclui lista de tarefas)
-```
-
-#### `app/schemas/task.py`
-```python
-# Schemas para Task:
-# - TaskBase (campos básicos)
-# - TaskCreate (para criação, inclui project_id)
-# - TaskUpdate (para atualização)
-# - Task (resposta completa)
-```
-
-### 3. Routers (app/routers/)
-
-Crie os seguintes arquivos:
-
-#### `app/routers/projects.py`
-```python
-# Endpoints para projetos:
-# - POST /projects/ (criar)
-# - GET /projects/ (listar com paginação)
-# - GET /projects/{project_id} (detalhar)
-# - PUT /projects/{project_id} (atualizar)
-# - DELETE /projects/{project_id} (deletar)
-```
-
-#### `app/routers/tasks.py`
-```python
-# Endpoints para tarefas:
-# - POST /tasks/ (criar, validar se projeto existe)
-# - GET /tasks/ (listar com paginação)
-# - GET /tasks/{task_id} (detalhar)
-# - PUT /tasks/{task_id} (atualizar)
-# - DELETE /tasks/{task_id} (deletar)
-```
-
-### 4. Atualizar main.py
-
-Adicione as importações e configurações necessárias:
-
-```python
-# Importar routers
-from app.routers import projects, tasks
-
-# Incluir routers
-app.include_router(projects.router)
-app.include_router(tasks.router)
-
-# Criar tabelas (opcional, se não usar migrations)
-from app.database import engine
-from app.models import project, task
-project.Base.metadata.create_all(bind=engine)
-task.Base.metadata.create_all(bind=engine)
-```
-
-### 5. Configurar migrations
-
-Atualize `migration/env.py` para importar os modelos:
-
-```python
-from app.database import Base
-from app.models import project, task
-target_metadata = Base.metadata
-```
-
-### 6. Testes (tests/)
-
-Crie testes para validar a funcionalidade:
-
-#### `tests/test_projects.py`
-```python
-# Testes para endpoints de projetos
-```
-
-#### `tests/test_tasks.py`
-```python
-# Testes para endpoints de tarefas
-```
+| Interface | URL |
+|---|---|
+| Swagger UI | http://localhost:8000/docs |
+| ReDoc | http://localhost:8000/redoc |
+| Health Check | http://localhost:8000/health |
 
 ---
 
-## Documentação da API
-
-Após a implementação, a documentação interativa estará disponível em:
-
-- http://localhost:8000/docs (Swagger UI)
-- http://localhost:8000/redoc (ReDoc)
-
----
-
-## Funcionalidades esperadas
+## Endpoints
 
 ### Projetos
 
-- `POST /projects` - Criar projeto
-- `GET /projects` - Listar projetos (com paginação)
-- `GET /projects/{project_id}` - Detalhar projeto (inclui tarefas)
-- `PUT /projects/{project_id}` - Atualizar projeto
-- `DELETE /projects/{project_id}` - Deletar projeto
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/projects/` | Criar um novo projeto |
+| `GET` | `/projects/` | Listar projetos (paginado) |
+| `GET` | `/projects/{project_id}` | Detalhar projeto com suas tarefas |
+| `PUT` | `/projects/{project_id}` | Atualizar projeto |
+| `DELETE` | `/projects/{project_id}` | Remover projeto e suas tarefas (cascade) |
 
 ### Tarefas
 
-- `POST /tasks` - Criar tarefa vinculada a um projeto
-- `GET /tasks` - Listar tarefas (com paginação)
-- `GET /tasks/{task_id}` - Detalhar tarefa
-- `PUT /tasks/{task_id}` - Atualizar tarefa
-- `DELETE /tasks/{task_id}` - Deletar tarefa
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/tasks/` | Criar tarefa vinculada a um projeto |
+| `GET` | `/tasks/` | Listar tarefas (paginado) |
+| `GET` | `/tasks/{task_id}` | Detalhar tarefa |
+| `PUT` | `/tasks/{task_id}` | Atualizar tarefa |
+| `DELETE` | `/tasks/{task_id}` | Remover tarefa |
 
-### Endpoints adicionais
+### Formato padrão de resposta
 
-- `GET /` - Informações da API
-- `GET /health` - Verificação de saúde da API
+Todas as respostas seguem o envelope `StandardResponse[T]`:
+
+```json
+{
+  "status": 200,
+  "message": "Operação realizada com sucesso",
+  "data": {}
+}
+```
 
 ---
 
 ## Exemplos de uso
 
 ### Criar um projeto
+
 ```bash
 curl -X POST "http://localhost:8000/projects/" \
      -H "Content-Type: application/json" \
-     -d '{"name": "Meu Projeto", "description": "Descrição do projeto"}'
+     -d '{"name": "Meu Projeto", "description": "Descrição opcional"}'
 ```
 
 ### Criar uma tarefa
+
 ```bash
 curl -X POST "http://localhost:8000/tasks/" \
      -H "Content-Type: application/json" \
-     -d '{"title": "Minha Tarefa", "description": "Descrição da tarefa", "project_id": "uuid-do-projeto"}'
+     -d '{"title": "Minha Tarefa", "description": "Descrição opcional", "project_id": "uuid-do-projeto"}'
 ```
 
-### Listar projetos
+### Listar projetos com paginação
+
 ```bash
-curl -X GET "http://localhost:8000/projects/"
+curl "http://localhost:8000/projects/?page=1&size=10"
+```
+
+### Marcar tarefa como concluída
+
+```bash
+curl -X PUT "http://localhost:8000/tasks/{task_id}" \
+     -H "Content-Type: application/json" \
+     -d '{"completed": true}'
 ```
 
 ---
 
 ## Testes
 
-Para rodar os testes automatizados (após implementação):
+Os testes utilizam **SQLite em memória** — não é necessária nenhuma configuração adicional.
 
 ```bash
+# Rodar todos os testes
 pytest
-```
 
-Para rodar com mais detalhes:
-```bash
+# Com saída detalhada
 pytest -v
+
+# Com relatório de cobertura
+pytest --cov=app --cov-report=term-missing
 ```
 
-Para rodar com cobertura:
-```bash
-pytest --cov=app
-```
+### O que é testado
+
+- `test_projects.py`: criação, listagem, busca por ID, atualização, remoção e casos de erro (404, 422)
+- `test_tasks.py`: criação com projeto válido/inválido, listagem, busca, atualização, remoção e casos de erro
 
 ---
 
 ## Migrations
 
-### Criar uma nova migration
 ```bash
-alembic revision --autogenerate -m "Descrição da mudança"
-```
+# Criar nova migration
+alembic revision --autogenerate -m "descrição da mudança"
 
-### Aplicar migrations
-```bash
+# Aplicar migrations pendentes
 alembic upgrade head
-```
 
-### Reverter migration
-```bash
+# Reverter última migration
 alembic downgrade -1
+
+# Ver histórico
+alembic history
 ```
-
----
-
-## Critérios de avaliação
-
-- **Estrutura do código**: Organização, legibilidade, boas práticas
-- **Funcionalidade**: Todos os endpoints funcionando corretamente
-- **Validação**: Uso adequado de Pydantic para validação
-- **Relacionamentos**: Implementação correta dos relacionamentos entre entidades
-- **Tratamento de erros**: Respostas HTTP apropriadas
-- **Testes**: Cobertura de testes adequada
-- **Documentação**: Documentação clara e completa
-
----
-
-## Licença
-
-Este projeto é fornecido apenas para fins de avaliação técnica.

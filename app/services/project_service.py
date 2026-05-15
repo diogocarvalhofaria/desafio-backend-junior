@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from fastapi import HTTPException
 from uuid import UUID
 from fastapi_pagination import Params
@@ -20,10 +21,10 @@ class ProjectService:
         return db_project
 
     def list_projects(self, params: Params = Params()):
-        return paginate(self.db.query(ProjectModel), params)
+        return paginate(self.db, select(ProjectModel), params)
 
     def get_by_id_project(self, project_id: UUID):
-        project = self.db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+        project = self.db.execute(select(ProjectModel).filter(ProjectModel.id == project_id)).scalars().first()
         if not project:
             raise HTTPException(status_code=404, detail="Projeto não encontrado")
         return project

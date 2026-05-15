@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from fastapi import HTTPException
 from uuid import UUID
 from fastapi_pagination import Params
@@ -14,7 +15,7 @@ class TaskService:
         self.db = db
 
     def create_task(self, task_in: TaskCreate):
-        project_exists = self.db.query(ProjectModel).filter(ProjectModel.id == task_in.project_id).first()
+        project_exists = self.db.execute(select(ProjectModel).filter(ProjectModel.id == task_in.project_id)).scalars().first()
         if not project_exists:
             raise HTTPException(status_code=404, detail="Projeto associado não encontrado")
 
@@ -25,10 +26,10 @@ class TaskService:
         return db_task
 
     def list_tasks(self, params: Params = Params()):
-        return paginate(self.db.query(TaskModel), params)
+        return paginate(self.db, select(TaskModel), params)
 
     def get_task(self, task_id: UUID):
-        task = self.db.query(TaskModel).filter(TaskModel.id == task_id).first()
+        task = self.db.execute(select(TaskModel).filter(TaskModel.id == task_id)).scalars().first()
         if not task:
             raise HTTPException(status_code=404, detail="Tarefa não encontrada")
         return task

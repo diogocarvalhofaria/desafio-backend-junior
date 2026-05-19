@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
+from typing import Optional
 from sqlalchemy.orm import Session
 from uuid import UUID
 from fastapi_pagination import Page, Params
@@ -29,12 +30,16 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     "/",
     response_model=StandardResponse[Page[ProjectSummary]],
     summary="Listar projetos",
-    description="Retorna a lista paginada de todos os projetos. Use os parâmetros `page` e `size` para controlar a paginação.",
+    description="Retorna a lista paginada de todos os projetos. Use `page` e `size` para paginação e `name` para filtrar por nome.",
     response_description="Lista de projetos paginada",
 )
-def list_projects(params: Params = Depends(), db: Session = Depends(get_db)):
+def list_projects(
+    params: Params = Depends(),
+    name: Optional[str] = Query(None, description="Filtrar por nome."),
+    db: Session = Depends(get_db),
+):
     service = ProjectService(db)
-    result = service.list_projects(params)
+    result = service.list_projects(params, name=name)
     return StandardResponse(status=200, message="Projetos listados com sucesso", data=result)
 
 
@@ -58,7 +63,7 @@ def get_by_id_project(project_id: UUID, db: Session = Depends(get_db)):
     "/{project_id}",
     response_model=StandardResponse[Project],
     summary="Atualizar projeto",
-    description="Atualiza os dados de um projeto existente. Apenas os campos enviados serão alterados (PATCH semântico).",
+    description="Atualiza os dados de um projeto existente. Apenas os campos enviados serão alterados.",
     response_description="Projeto atualizado com sucesso",
     responses={
         404: {"description": "Projeto não encontrado"},
@@ -74,7 +79,7 @@ def update_project(project_id: UUID, project_update: ProjectUpdate, db: Session 
     "/{project_id}",
     response_model=MessageResponse,
     summary="Remover projeto",
-    description="Remove um projeto e todas as suas tarefas associadas (cascade delete).",
+    description="Remove um projeto e todas as suas tarefas associadas.",
     response_description="Projeto removido com sucesso",
     responses={
         404: {"description": "Projeto não encontrado"},

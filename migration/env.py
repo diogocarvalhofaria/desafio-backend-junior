@@ -25,8 +25,6 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # TODO: Importar os modelos quando forem criados
 from app.database import Base
-from app.models.project import Project
-from app.models.task import Task
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

@@ -137,25 +137,45 @@ A API estará disponível em `http://localhost:8000`.
 
 ## Endpoints
 
+> Base path: `/api/v1`
+
 ### Projetos
 
 | Método | Rota | Descrição |
 |---|---|---|
-| `POST` | `/projects/` | Criar um novo projeto |
-| `GET` | `/projects/` | Listar projetos (paginado) |
-| `GET` | `/projects/{project_id}` | Detalhar projeto com suas tarefas |
-| `PUT` | `/projects/{project_id}` | Atualizar projeto |
-| `DELETE` | `/projects/{project_id}` | Remover projeto e suas tarefas (cascade) |
+| `POST` | `/api/v1/projects/` | Criar um novo projeto |
+| `GET` | `/api/v1/projects/` | Listar projetos (paginado + filtros) |
+| `GET` | `/api/v1/projects/{project_id}` | Detalhar projeto com suas tarefas |
+| `PUT` | `/api/v1/projects/{project_id}` | Atualizar projeto |
+| `DELETE` | `/api/v1/projects/{project_id}` | Remover projeto e suas tarefas |
+
+#### Filtros disponíveis — `GET /api/v1/projects/`
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `page` | `int` | Número da página (padrão: 1) |
+| `size` | `int` | Itens por página (padrão: 50) |
+| `name` | `string` | Busca parcial no nome |
 
 ### Tarefas
 
 | Método | Rota | Descrição |
 |---|---|---|
-| `POST` | `/tasks/` | Criar tarefa vinculada a um projeto |
-| `GET` | `/tasks/` | Listar tarefas (paginado) |
-| `GET` | `/tasks/{task_id}` | Detalhar tarefa |
-| `PUT` | `/tasks/{task_id}` | Atualizar tarefa |
-| `DELETE` | `/tasks/{task_id}` | Remover tarefa |
+| `POST` | `/api/v1/tasks/` | Criar tarefa vinculada a um projeto |
+| `GET` | `/api/v1/tasks/` | Listar tarefas (paginado + filtros) |
+| `GET` | `/api/v1/tasks/{task_id}` | Detalhar tarefa |
+| `PUT` | `/api/v1/tasks/{task_id}` | Atualizar tarefa |
+| `DELETE` | `/api/v1/tasks/{task_id}` | Remover tarefa |
+
+#### Filtros disponíveis — `GET /api/v1/tasks/`
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `page` | `int` | Número da página (padrão: 1) |
+| `size` | `int` | Itens por página (padrão: 50) |
+| `project_id` | `UUID` | Filtrar tarefas de um projeto específico |
+| `completed` | `bool` | Filtrar por status (`true` / `false`) |
+| `title` | `string` | Busca parcial no título |
 
 ### Formato padrão de resposta
 
@@ -176,7 +196,7 @@ Todas as respostas seguem o envelope `StandardResponse[T]`:
 ### Criar um projeto
 
 ```bash
-curl -X POST "http://localhost:8000/projects/" \
+curl -X POST "http://localhost:8000/api/v1/projects/" \
      -H "Content-Type: application/json" \
      -d '{"name": "Meu Projeto", "description": "Descrição opcional"}'
 ```
@@ -184,21 +204,35 @@ curl -X POST "http://localhost:8000/projects/" \
 ### Criar uma tarefa
 
 ```bash
-curl -X POST "http://localhost:8000/tasks/" \
+curl -X POST "http://localhost:8000/api/v1/tasks/" \
      -H "Content-Type: application/json" \
      -d '{"title": "Minha Tarefa", "description": "Descrição opcional", "project_id": "uuid-do-projeto"}'
 ```
 
-### Listar projetos com paginação
+### Listar projetos com paginação e filtro
 
 ```bash
-curl "http://localhost:8000/projects/?page=1&size=10"
+# Todos os projetos (página 1)
+curl "http://localhost:8000/api/v1/projects/?page=1&size=10"
+
+# Filtrar projetos cujo nome contenha "api"
+curl "http://localhost:8000/api/v1/projects/?name=api"
+```
+
+### Listar tarefas com filtros
+
+```bash
+# Tarefas de um projeto específico, ainda não concluídas
+curl "http://localhost:8000/api/v1/tasks/?project_id=uuid-do-projeto&completed=false"
+
+# Buscar tarefas com "bug" no título
+curl "http://localhost:8000/api/v1/tasks/?title=bug"
 ```
 
 ### Marcar tarefa como concluída
 
 ```bash
-curl -X PUT "http://localhost:8000/tasks/{task_id}" \
+curl -X PUT "http://localhost:8000/api/v1/tasks/{task_id}" \
      -H "Content-Type: application/json" \
      -d '{"completed": true}'
 ```

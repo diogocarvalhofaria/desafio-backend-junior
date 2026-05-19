@@ -60,8 +60,10 @@ def read_root():
     """Endpoint raiz da API"""
     return {
         "message": "Bem-vindo à API de Projetos e Tarefas",
+        "version": "v1",
         "docs": "/docs",
-        "redoc": "/redoc"
+        "redoc": "/redoc",
+        "api": "/api/v1"
     }
 
 @app.get("/health", response_model=StandardResponse)
@@ -72,7 +74,7 @@ def health_check():
         data={"status": "healthy"}
     )
 
-app.include_router(projects_router)
-app.include_router(tasks_router)
+app.include_router(projects_router, prefix="/api/v1")
+app.include_router(tasks_router, prefix="/api/v1")
 
 add_pagination(app)

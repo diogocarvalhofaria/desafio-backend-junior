@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
+from typing import Optional
 from sqlalchemy.orm import Session
 from uuid import UUID
 from fastapi_pagination import Page, Params
@@ -32,12 +33,18 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     "/",
     response_model=StandardResponse[Page[TaskSummary]],
     summary="Listar tarefas",
-    description="Retorna a lista paginada de todas as tarefas. Use os parâmetros `page` e `size` para controlar a paginação.",
+    description="Retorna a lista paginada de todas as tarefas. Filtre por `project_id`, `completed` ou busca parcial em `title`.",
     response_description="Lista de tarefas paginada",
 )
-def list_tasks(params: Params = Depends(), db: Session = Depends(get_db)):
+def list_tasks(
+    params: Params = Depends(),
+    project_id: Optional[UUID] = Query(None, description="Filtrar pelo ID do projeto"),
+    completed: Optional[bool] = Query(None, description="Filtrar por status de conclusão"),
+    title: Optional[str] = Query(None, description="Filtrar por título"),
+    db: Session = Depends(get_db),
+):
     service = TaskService(db)
-    result = service.list_tasks(params)
+    result = service.list_tasks(params, project_id=project_id, completed=completed, title=title)
     return StandardResponse(status=200, message="Tarefas listadas com sucesso", data=result)
 
 

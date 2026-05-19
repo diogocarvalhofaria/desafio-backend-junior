@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from fastapi import HTTPException
 from uuid import UUID
+from typing import Optional
 from fastapi_pagination import Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 
@@ -20,8 +21,13 @@ class ProjectService:
         self.db.refresh(db_project)
         return db_project
 
-    def list_projects(self, params: Params = Params()):
-        return paginate(self.db, select(ProjectModel), params)
+    def list_projects(self, params: Params = Params(), name: Optional[str] = None):
+        query = select(ProjectModel)
+
+        if name:
+            query = query.where(ProjectModel.name.ilike(f"%{name}%"))
+
+        return paginate(self.db, query, params)
 
     def get_by_id_project(self, project_id: UUID):
         project = self.db.execute(select(ProjectModel).filter(ProjectModel.id == project_id)).scalars().first()

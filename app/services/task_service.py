@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from fastapi import HTTPException
 from uuid import UUID
+from typing import Optional
 from fastapi_pagination import Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 
@@ -25,8 +26,25 @@ class TaskService:
         self.db.refresh(db_task)
         return db_task
 
-    def list_tasks(self, params: Params = Params()):
-        return paginate(self.db, select(TaskModel), params)
+    def list_tasks(
+        self,
+        params: Params = Params(),
+        project_id: Optional[UUID] = None,
+        completed: Optional[bool] = None,
+        title: Optional[str] = None,
+    ):
+        query = select(TaskModel)
+
+        if project_id:
+            query = query.where(TaskModel.project_id == project_id)
+
+        if completed is not None:
+            query = query.where(TaskModel.completed == completed)
+
+        if title:
+            query = query.where(TaskModel.title.ilike(f"%{title}%"))
+
+        return paginate(self.db, query, params)
 
     def get_task(self, task_id: UUID):
         task = self.db.execute(select(TaskModel).filter(TaskModel.id == task_id)).scalars().first()
